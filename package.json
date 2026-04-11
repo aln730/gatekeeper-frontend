@@ -1,0 +1,32 @@
+{
+  "name": "gatekeeper-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "jest --watchAll=false",
+    "test:watch": "jest"
+  },
+  "dependencies": {
+    "next": "^15.0.0",
+    "next-auth": "beta",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-bootstrap": "^2.10.0",
+    "bootstrap": "^5.3.0",
+    "csh-material-bootstrap": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.0.0",
+    "jest": "^29.0.0",
+    "jest-environment-jsdom": "^29.0.0",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/jest-dom": "^6.0.0",
+    "@testing-library/user-event": "^14.0.0"
+  }
+}
