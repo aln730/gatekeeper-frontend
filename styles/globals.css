@@ -1,0 +1,11 @@
+@import 'csh-material-bootstrap/dist/csh-material-bootstrap.css';
+
+.navbar .dropdown-toggle {
+  display: flex !important;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.navbar .dropdown-toggle::after {
+  border-top-color: white;
+}
