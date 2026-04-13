@@ -43,11 +43,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       issuer: "https://sso.csh.rit.edu/auth/realms/csh",
       clientId: process.env.AUTH_OIDC_ID,
       clientSecret: process.env.AUTH_OIDC_SECRET,
-      authorization: { params: { scope: "openid profile email ipaUniqueID" } },
+      authorization: { params: { scope: "openid profile email" } },
     },
   ],
   pages: {
     signIn: "/signin",
+    error: "/auth-error",
   },
   callbacks: {
     jwt({ token, account, profile }) {
@@ -62,7 +63,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         };
       }
 
-      if (Date.now() < (token.expiresAt as number) * 1000) {
+      if (token.expiresAt && Date.now() < token.expiresAt * 1000) {
         return token;
       }
 
