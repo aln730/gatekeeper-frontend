@@ -12,7 +12,12 @@ import { AUTH_PROVIDER_ID, REFRESH_TOKEN_ERROR, DOOR_ACCESS_DENIED_MESSAGES } fr
 import DoorCard, { type Door, type DoorStatus } from "@/components/DoorCard";
 
 export default function DoorsPage() {
-  const { data: session } = useSession({ required: true });
+  const { data: session } = useSession({
+    required: true,
+    onUnauthenticated() {
+      signIn(AUTH_PROVIDER_ID);
+    },
+  });
   const token = session?.accessToken ?? "";
   const sessionError = session?.error;
 
