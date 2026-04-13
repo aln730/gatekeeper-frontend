@@ -1,14 +1,14 @@
 "use client";
 
 import { useSession, signIn } from "next-auth/react";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { toast } from "react-toastify";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Spinner from "react-bootstrap/Spinner";
 import { apiFetch } from "@/lib/api";
-import { AUTH_PROVIDER_ID, REFRESH_TOKEN_ERROR, DOOR_ACCESS_DENIED_MESSAGES } from "@/lib/constants";
+import { AUTH_PROVIDER_ID, REFRESH_TOKEN_ERROR } from "@/lib/constants";
 import DoorCard, { type Door, type DoorStatus } from "@/components/DoorCard";
 
 export default function DoorsPage() {
@@ -32,12 +32,19 @@ export default function DoorsPage() {
   const tokenRef = useRef(token);
   tokenRef.current = token;
 
+  const fetchingRef = useRef(false);
   const fetchStatuses = useCallback(async (doorList: Door[]) => {
     const t = tokenRef.current;
-    if (!t || doorList.length === 0) return;
-    const results = await Promise.allSettled(
-      doorList.map((d) => apiFetch(`/doors/${d.id}/status`, t))
-    );
+    if (!t || doorList.length === 0 || fetchingRef.current) return;
+    fetchingRef.current = true;
+    let results;
+    try {
+      results = await Promise.allSettled(
+        doorList.map((d) => apiFetch(`/doors/${d.id}/status`, t))
+      );
+    } finally {
+      fetchingRef.current = false;
+    }
     setStatuses((prev) => {
       const next = { ...prev };
       let changed = false;
@@ -64,7 +71,6 @@ export default function DoorsPage() {
         const list = (data as { doors: Door[] }).doors;
         setDoors(list);
         setLoadingDoors(false);
-        fetchStatuses(list);
       })
       .catch((e: unknown) => {
         setFetchError(e instanceof Error ? e.message : "Failed to load doors");
@@ -74,9 +80,43 @@ export default function DoorsPage() {
 
   useEffect(() => {
     if (doors.length === 0) return;
-    const id = setInterval(() => fetchStatuses(doors), 30_000);
-    return () => clearInterval(id);
+
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    function start() {
+      fetchStatuses(doors);
+      intervalId = setInterval(() => fetchStatuses(doors), 30_000);
+    }
+
+    function stop() {
+      if (intervalId !== null) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        start();
+      } else {
+        stop();
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    if (document.visibilityState === "visible") {
+      start();
+    }
+
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [doors, fetchStatuses]);
+
+  const accessible = useMemo(() => doors.filter((d) => d.access), [doors]);
+  const inaccessible = useMemo(() => doors.filter((d) => !d.access), [doors]);
 
   const handleUnlock = async (doorId: string) => {
     setUnlocking((prev) => ({ ...prev, [doorId]: true }));
@@ -85,12 +125,7 @@ export default function DoorsPage() {
       toast.success("Door unlocked!");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Unknown error";
-      if (msg === "HTTP 403") {
-        const doorName = doors.find((d) => d.id === doorId)?.name ?? "";
-        toast.error(DOOR_ACCESS_DENIED_MESSAGES[doorName] ?? "Access denied.");
-      } else {
-        toast.error(`Unlock failed: ${msg}`);
-      }
+      toast.error(`Unlock failed: ${msg}`);
     } finally {
       setUnlocking((prev) => ({ ...prev, [doorId]: false }));
     }
@@ -118,8 +153,8 @@ export default function DoorsPage() {
     <Container className="mt-4">
       <h2 className="mb-4">Doors</h2>
       <Row>
-        {doors.map((door) => (
-          <Col md={4} className="mb-3" key={door.id}>
+        {accessible.map((door) => (
+          <Col md={6} className="mb-3" key={door.id}>
             <DoorCard
               door={door}
               status={statuses[door.id]}
@@ -129,6 +164,23 @@ export default function DoorsPage() {
           </Col>
         ))}
       </Row>
+      {inaccessible.length > 0 && (
+        <>
+          <h5 className="mt-3 mb-3 text-muted">No Access</h5>
+          <Row>
+            {inaccessible.map((door) => (
+              <Col md={6} className="mb-3" key={door.id}>
+                <DoorCard
+                  door={door}
+                  status={statuses[door.id]}
+                  onUnlock={handleUnlock}
+                  loading={false}
+                />
+              </Col>
+            ))}
+          </Row>
+        </>
+      )}
     </Container>
   );
 }
