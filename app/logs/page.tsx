@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Container, Row, Col, Table, Spinner, Button } from "react-bootstrap";
 import Icon from "@mdi/react";
-import { mdiMagnify, mdiRefresh, mdiHistory, mdiCheckCircle, mdiCloseCircle } from "@mdi/js";
+import { mdiMagnify, mdiRefresh, mdiHistory, mdiCheckCircle, mdiCloseCircle, mdiEyeOutline } from "@mdi/js";
 import { apiFetch } from "@/lib/api";
 
 import { AUTH_PROVIDER_ID, REFRESH_TOKEN_ERROR } from "@/lib/constants";
@@ -43,7 +43,6 @@ async function fetchLogs(token: string, cursor?: string): Promise<LogsResponse> 
     ? `/admin/logs?cursor=${encodeURIComponent(cursor)}` : "/admin/logs";
   return apiFetch(path, token) as Promise<LogsResponse>;
 }
-
 export default function LogsPage() {
   const { data: session } = useSession();
   const [logs,        setLogs]        = useState<LogEntry[]>([]);
@@ -53,6 +52,7 @@ export default function LogsPage() {
   const [grantFilter, setGrantFilter] = useState<"all" | "granted" | "denied">("all");
   const [doorFilter,  setDoorFilter]  = useState("all");
   const [cursorStack, setCursorStack] = useState<Array<string | null>>([null]);
+  const [nextCursor,  setNextCursor]  = useState<string | null>(null);
   const [pageIndex,   setPageIndex]   = useState(0);
   const token = session?.accessToken ?? "";
     const sessionError = session?.error;
@@ -68,6 +68,7 @@ export default function LogsPage() {
     try {
       const data = await fetchLogs(token, cursor ?? undefined);
       setLogs(data.logs);
+      setNextCursor(data.cursor);
       setPageIndex(idx);
       setCursorStack((prev) => {
         if (idx + 1 < prev.length) return prev;
@@ -85,6 +86,19 @@ export default function LogsPage() {
   }, [token]);
 
   useEffect(() => { loadPage(0, null); }, [loadPage]);
+
+  const hasPrev    = pageIndex > 0;
+  const hasNext    = pageIndex + 1 < cursorStack.length || !!nextCursor;
+  const knownPages = cursorStack.length;
+  const currentPage = pageIndex + 1;
+
+  const goPrev = () => hasPrev && loadPage(pageIndex - 1, cursorStack[pageIndex - 1]);
+  const goNext = () => {
+    if (!hasNext) return;
+    const nextIdx = pageIndex + 1;
+    loadPage(nextIdx, cursorStack[nextIdx] ?? nextCursor);
+  };
+
 
   const uniqueDoors = Array.from(new Set(logs.map((l) => l.doorName ?? l.door))).sort();
 
@@ -119,14 +133,14 @@ export default function LogsPage() {
 
         <Col xs="auto" className="d-flex gap-2">
           <Button
-            variant="outline-primary"
+            variant="outline-dark"
             size="sm"
             onClick={() => loadPage(pageIndex, cursorStack[pageIndex], true)}
             disabled={refreshing}
           >
             {refreshing
               ? <Spinner animation="border" size="sm" />
-              : <Icon path={mdiRefresh} size={1.5} />}
+              : <Icon path={mdiEyeOutline} size={1.5} />}
           </Button>
         </Col>
       </Row>
@@ -261,7 +275,36 @@ export default function LogsPage() {
                 </tbody>
               </Table>
             </div>
+        
         )}
+
+        <div className="card-footer d-flex justify-content-between align-items-center">
+        <small className="text-muted">
+            Page {currentPage} &nbsp;·&nbsp; {filtered.length} entr{filtered.length !== 1 ? "ies" : "y"}
+            {filtered.length !== logs.length && ` (filtered from ${logs.length})`}
+            </small>
+            <ul className="pagination pagination-sm mb-0">
+                <li className={`page-item ${!hasPrev ? "disabled" : ""}`}>
+                    <a className="page-link" href="#" onClick={(e) => { e.preventDefault(); goPrev(); }} aria-label="Previous"> &laquo;</a>
+                </li>
+
+                {Array.from({ length: knownPages }, (_, i) => (
+                  <li key={i} className={`page-item ${i === pageIndex ? "active" : ""}`}>
+                    <a className="page-link" href="#" onClick={(e) => { e.preventDefault(); loadPage(i, cursorStack[i]); }}> {i + 1}</a>
+                    </li>
+                ))}
+
+                {hasNext && pageIndex + 1 >= knownPages && (
+                    <li className="page-item">
+                    <a className="page-link" href="#" onClick={(e) => { e.preventDefault(); goNext(); }}> {currentPage + 1}</a>
+                    </li>
+                )}
+
+             <li className={`page-item ${!hasNext ? "disabled" : ""}`}>
+                <a className="page-link" href="#" onClick={(e) => { e.preventDefault(); goNext(); }} aria-label="Next"> &raquo;</a>
+                </li>
+            </ul>
+        </div>
       </div>
     </Container>
   );
