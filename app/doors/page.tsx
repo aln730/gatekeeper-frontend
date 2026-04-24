@@ -152,6 +152,17 @@ export default function DoorsPage() {
     );
   }
 
+  const allowed = session?.groups?.includes("rtp");
+  if (!allowed) {
+    return (
+      <Container className="py-5 text-center text-muted">
+        <h4>Access Denied</h4>
+        <p>You must be an RTP to view this page.</p>
+      </Container>
+    );
+  }
+
+
   if (loadingDoors) {
     return (
       <Container className="mt-5 text-center">

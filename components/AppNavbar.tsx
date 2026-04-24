@@ -7,6 +7,7 @@ export default function AppNavbar() {
   const { data: session } = useSession();
   const username = session?.username as string | undefined;
   const displayName = session?.user?.name ?? username;
+  const idToken = session?.idToken;
 
   const [collapsed, setCollapsed] = useState(true);
 
@@ -50,9 +51,11 @@ export default function AppNavbar() {
 function UserDropdown({
   username,
   displayName,
+  idToken,
 }: {
   username: string;
   displayName?: string | null;
+  idToken?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -88,7 +91,15 @@ function UserDropdown({
         <a
           className="dropdown-item"
           href="#"
-          onClick={(e) => { e.preventDefault(); signOut(); }}
+          onClick={async (e) => {
+            e.preventDefault();
+            await signOut({ redirect: false });
+            const url = new URL("https://sso.csh.rit.edu/auth/realms/csh/protocol/openid-connect/logout");
+            if (idToken) {
+              url.searchParams.set("id_token_hint", idToken);
+            }
+            window.location.href = url.toString();
+          }}
         >
           Sign out
         </a>

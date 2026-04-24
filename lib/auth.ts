@@ -60,6 +60,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               ...token,
               accessToken: account.access_token,
               refreshToken: account.refresh_token,
+              idToken: account.id_token,
               expiresAt: account.expires_at,
               username: (profile as any)?.preferred_username,
               groups: payload.groups ?? [],
@@ -78,6 +79,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.error = token.error as string | undefined;
       session.username = token.username;
       session.groups = token.groups ?? [];
+      session.idToken = token.idToken as string;
       return session;
     },
   },
