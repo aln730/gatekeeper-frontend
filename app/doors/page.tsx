@@ -13,7 +13,12 @@ import DoorCard, { type Door, type DoorStatus } from "@/components/DoorCard";
 import { useRouter } from "next/navigation";
 
 export default function DoorsPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useSession({
+  required: true,
+    onUnauthenticated() {
+      signIn(AUTH_PROVIDER_ID);
+    },
+  });
   const router = useRouter();
   const token = session?.accessToken ?? "";
   const sessionError = session?.error;

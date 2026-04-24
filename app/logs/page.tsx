@@ -44,7 +44,12 @@ async function fetchLogs(token: string, cursor?: string): Promise<LogsResponse> 
   return apiFetch(path, token) as Promise<LogsResponse>;
 }
 export default function LogsPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useSession({
+  required: true,
+    onUnauthenticated() {
+      signIn(AUTH_PROVIDER_ID);
+    },
+  });
   const [logs,        setLogs]        = useState<LogEntry[]>([]);
   const [loading,     setLoading]     = useState(true);
   const [refreshing,  setRefreshing]  = useState(false);
