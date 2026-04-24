@@ -52,17 +52,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   callbacks: {
     jwt({ token, account, profile }) {
-      if (account) {
-        return {
-          ...token,
-          accessToken: account.access_token,
-          refreshToken: account.refresh_token,
-          expiresAt: account.expires_at,
-          username: (profile as any)?.preferred_username as string | undefined,
-          groups: (profile as any)?.groups as string[] ?? [],
-          error: undefined,
-        };
-      }
+          if (account) {
+            const payload = JSON.parse(
+              Buffer.from((account as any).access_token.split(".")[1], "base64").toString()
+            );
+            return {
+              ...token,
+              accessToken: account.access_token,
+              refreshToken: account.refresh_token,
+              expiresAt: account.expires_at,
+              username: (profile as any)?.preferred_username,
+              groups: payload.groups ?? [],
+              error: undefined,
+            };
+          }
 
       if (token.expiresAt && Date.now() < token.expiresAt * 1000) {
         return token;

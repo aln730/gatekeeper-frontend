@@ -99,15 +99,16 @@ export default function LogsPage() {
       );
     }
 
-    if (!session?.groups?.includes("rtp")) {
-      return (
-        <Container className="py-5 text-center text-muted">
-          <h4>Access Denied</h4>
-          <p>You must be an RTP to view this page.</p>
-        </Container>
-      );
-    }
-
+  const allowed = session?.groups?.includes("rtp");
+      if (!allowed) {
+        return (
+          <Container className="py-5 text-center text-muted">
+            <h4>Access Denied</h4>
+            <p>You must be an RTP to view this page.</p>
+          </Container>
+        );
+      }
+      
   const hasPrev    = pageIndex > 0;
   const hasNext    = pageIndex + 1 < cursorStack.length || !!nextCursor;
   const knownPages = cursorStack.length;
