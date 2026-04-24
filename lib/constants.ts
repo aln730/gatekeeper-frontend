@@ -5,8 +5,8 @@ export const DEFAULT_NO_ACCESS = "You do not have access to this door.";
 
 // Door-specific messages, keyed by door name
 export const DOOR_ACCESS_DENIED_MESSAGES: Record<string, string> = {
-  "Project Room": "Have you completed the required safety seminar?",
-  "Server Room": "Server Room access requires being an active RTP.",
+  "Project Room": "Safety Seminar Required",
+  "Server Room": "Restricted",
 };
 
 // Auth error messages shown on /auth-error, keyed by next-auth error code

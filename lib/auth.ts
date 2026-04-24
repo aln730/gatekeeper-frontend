@@ -58,7 +58,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           accessToken: account.access_token,
           refreshToken: account.refresh_token,
           expiresAt: account.expires_at,
-          username: (profile as Record<string, unknown>)?.preferred_username as string | undefined,
+          username: (profile as any)?.preferred_username as string | undefined,
+          groups: (profile as any)?.groups as string[] ?? [],
           error: undefined,
         };
       }
@@ -73,6 +74,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.accessToken = token.accessToken as string;
       session.error = token.error as string | undefined;
       session.username = token.username;
+      session.groups = token.groups ?? [];
       return session;
     },
   },

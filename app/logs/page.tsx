@@ -44,7 +44,7 @@ async function fetchLogs(token: string, cursor?: string): Promise<LogsResponse> 
   return apiFetch(path, token) as Promise<LogsResponse>;
 }
 export default function LogsPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [logs,        setLogs]        = useState<LogEntry[]>([]);
   const [loading,     setLoading]     = useState(true);
   const [refreshing,  setRefreshing]  = useState(false);
@@ -86,6 +86,22 @@ export default function LogsPage() {
   }, [token]);
 
   useEffect(() => { loadPage(0, null); }, [loadPage]);
+    if (status === "loading") {
+      return (
+        <Container className="py-5 d-flex justify-content-center">
+          <Spinner animation="border" variant="primary" />
+        </Container>
+      );
+    }
+
+    if (!session?.groups?.includes("rtp")) {
+      return (
+        <Container className="py-5 text-center text-muted">
+          <h4>Access Denied</h4>
+          <p>You must be an RTP to view this page.</p>
+        </Container>
+      );
+    }
 
   const hasPrev    = pageIndex > 0;
   const hasNext    = pageIndex + 1 < cursorStack.length || !!nextCursor;
@@ -156,7 +172,7 @@ export default function LogsPage() {
             <input
               type="text"
               className="form-control"
-              placeholder="Search door, username, or display name…"
+              placeholder="Search door, username, or name…"
               aria-describedby="search-addon"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -296,7 +312,7 @@ export default function LogsPage() {
 
                 {hasNext && pageIndex + 1 >= knownPages && (
                     <li className="page-item">
-                    <a className="page-link" href="#" onClick={(e) => { e.preventDefault(); goNext(); }}> {currentPage + 1}</a>
+                    <a className="page-link" href="#" onClick={(e) => { e.preventDefault(); goNext(); }}> {currentPage}</a>
                     </li>
                 )}
 

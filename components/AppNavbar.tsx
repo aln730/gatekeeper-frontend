@@ -14,7 +14,7 @@ export default function AppNavbar() {
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
       <div className="container">
 
-        <a className="navbar-brand" href="/doors">
+        <a className="navbar-brand" href="logs">
           Gatekeeper
         </a>
 
@@ -32,11 +32,8 @@ export default function AppNavbar() {
 
           <ul className="navbar-nav mr-auto">
             <li className="nav-item">
-              <a className="nav-link" href="/doors">Doors</a>
-            </li>
-            <li className="nav-item">
               <a className="nav-link" href="/logs">Logs</a>
-            </li>
+            </li> 
           </ul>
 
           {username && (

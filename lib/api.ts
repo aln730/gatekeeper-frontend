@@ -13,7 +13,7 @@ export async function apiFetch(
     },
   });
 
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
   if (res.status === 204) return null;
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }

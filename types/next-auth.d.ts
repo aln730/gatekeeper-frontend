@@ -6,6 +6,7 @@ declare module "next-auth" {
     accessToken: string;
     error?: string;
     username?: string;
+    groups: string[];
   }
 }
 
@@ -16,5 +17,6 @@ declare module "next-auth/jwt" {
     expiresAt?: number;
     error?: string;
     username?: string;
+    groups: string[];
   }
 }
