@@ -238,11 +238,6 @@ export default function LogsPage() {
     <Container fluid className="py-4">
 
       <Row className="mb-4 align-items-center">
-        <Col>
-          <h2 className="mb-0">Access Logs</h2>
-          <p className="text-muted mb-0 mt-1">Big Brother is watching</p>
-        </Col>
-        
         <Col xs="auto">
           <Button
             variant="outline-dark"
@@ -300,14 +295,6 @@ export default function LogsPage() {
             />
           </div>
         </div>
-
-        {(search || grantFilter !== "all" || doorFilter !== "all") && (
-          <div className="col-auto mt-2 mt-md-0">
-            <button className="btn btn-outline-primary" onClick={() => { setSearch(""); setGrantFilter("all"); setDoorFilter("all"); }}>
-              Clear
-            </button>
-          </div>
-        )}
       </div>
 
       <div className="card">
@@ -374,8 +361,7 @@ export default function LogsPage() {
           style={{ gridTemplateColumns: "1fr auto 1fr" }}
         >
           <small className="text-muted">
-            Page {pageIndex + 1} &nbsp;·&nbsp; {filtered.length} entr{filtered.length !== 1 ? "ies" : "y"}
-            {filtered.length !== logs.length && ` (filtered from ${logs.length})`}
+            Page {pageIndex + 1} &nbsp;·&nbsp;
           </small>
           <div className="justify-self-center">
             <PaginationControls />
