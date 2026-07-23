@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession, signIn } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { toast } from "react-toastify";
 import Container from "react-bootstrap/Container";
@@ -8,32 +8,11 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Spinner from "react-bootstrap/Spinner";
 import { apiFetch } from "@/lib/api";
-import { AUTH_PROVIDER_ID, REFRESH_TOKEN_ERROR } from "@/lib/constants";
 import DoorCard, { type Door, type DoorStatus } from "@/components/DoorCard";
-import { useRouter } from "next/navigation";
 
 export default function DoorsPage() {
-  const { data: session, status } = useSession({
-  required: true,
-    onUnauthenticated() {
-      signIn(AUTH_PROVIDER_ID);
-    },
-  });
-  const router = useRouter();
+  const { data: session } = useSession();
   const token = session?.accessToken ?? "";
-  const sessionError = session?.error;
-
-  useEffect(() => {
-    if (status !== "loading" && !session) {
-      router.replace("/unauthorized");
-    }
-  }, [status, session, router]);
-
-  useEffect(() => {
-    if (sessionError === REFRESH_TOKEN_ERROR) {
-      signIn(AUTH_PROVIDER_ID);
-    }
-  }, [sessionError]);
 
   const [doors, setDoors] = useState<Door[]>([]);
   const [statuses, setStatuses] = useState<Record<string, DoorStatus>>({});
@@ -143,25 +122,6 @@ export default function DoorsPage() {
       setUnlocking((prev) => ({ ...prev, [doorId]: false }));
     }
   };
-
-  if (status === "loading" || !session) {
-    return (
-      <Container className="mt-5 text-center">
-        <Spinner animation="border" />
-      </Container>
-    );
-  }
-
-  const allowed = session?.groups?.includes("rtp");
-  if (!allowed) {
-    return (
-      <Container className="py-5 text-center text-muted">
-        <h4>Access Denied</h4>
-        <p>You must be an RTP to view this page.</p>
-      </Container>
-    );
-  }
-
 
   if (loadingDoors) {
     return (

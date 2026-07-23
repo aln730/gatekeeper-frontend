@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Providers from "@/components/Providers";
 import AppNavbar from "@/components/AppNavbar";
+import AuthGate from "@/components/AuthGate";
 import { ToastContainer } from "react-toastify";
 import "@/styles/globals.css";
 import "react-toastify/dist/ReactToastify.css";
@@ -19,7 +20,9 @@ export default function RootLayout({
       <body>
         <Providers>
           <AppNavbar />
-          <main>{children}</main>
+          <AuthGate>
+            <main>{children}</main>
+          </AuthGate>
           <ToastContainer position="bottom-right" theme="colored" />
         </Providers>
       </body>

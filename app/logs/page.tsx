@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Container, Row, Col, Table, Spinner, Button } from "react-bootstrap";
 import Icon from "@mdi/react";
 import { mdiMagnify, mdiHistory, mdiCheckCircle, mdiCloseCircle, mdiEyeOutline } from "@mdi/js";
 import { apiFetch } from "@/lib/api";
 
-import { AUTH_PROVIDER_ID, REFRESH_TOKEN_ERROR } from "@/lib/constants";
-import { useSession, signIn } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import type DateRangePicker from "vanillajs-datepicker/DateRangePicker";
 import "vanillajs-datepicker/css/datepicker-bs5.css";
 
@@ -79,10 +78,7 @@ async function fetchLogs(token: string, cursor?: string, since?: string, until?:
   return apiFetch(`/admin/logs?${params}`, token) as Promise<LogsResponse>;
 }
 export default function LogsPage() {
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() { signIn(AUTH_PROVIDER_ID); },
-  });
+  const { data: session } = useSession();
   const [logs,        setLogs]        = useState<LogEntry[]>([]);
   const [loading,     setLoading]     = useState(true);
   const [refreshing,  setRefreshing]  = useState(false);
@@ -95,7 +91,6 @@ export default function LogsPage() {
   const [nextCursor,  setNextCursor]  = useState<string | null>(null);
   const [pageIndex,   setPageIndex]   = useState(0);
   const token = session?.accessToken ?? "";
-  const sessionError = session?.error;
   const rangeElRef = useRef<HTMLDivElement>(null);
   const startInputRef = useRef<HTMLInputElement>(null);
   const endInputRef = useRef<HTMLInputElement>(null);
@@ -139,11 +134,8 @@ export default function LogsPage() {
       rangepickerRef.current = null;
     };
 
-  }, [status]);
+  }, []);
 
-  useEffect(() => {
-    if (sessionError === REFRESH_TOKEN_ERROR) signIn(AUTH_PROVIDER_ID);
-  }, [sessionError]);
   const loadPage = useCallback(async (idx: number, cursor: string | null, silent = false) => {
     if (!token) return;
     silent ? setRefreshing(true) : setLoading(true);
@@ -175,24 +167,6 @@ export default function LogsPage() {
     setNextCursor(null);
     loadPage(0, null);
   }, [loadPage]);
-  if (status === "loading") {
-    return (
-      <Container className="py-5 d-flex justify-content-center">
-        <Spinner animation="border" variant="primary" />
-      </Container>
-    );
-  }
-
-  //TBH, this should a global thing.
-  const allowed = session?.groups?.includes("rtp");
-      if (!allowed) {
-        return (
-          <Container className="py-5 text-center text-muted">
-            <h4>Access Denied</h4>
-            <p>You must be an RTP to view this page.</p>
-          </Container>
-        );
-      }
 
   const hasPrev = pageIndex > 0;
   const hasNext = nextCursor !== null;

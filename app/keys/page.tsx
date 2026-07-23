@@ -1,6 +1,6 @@
 "use client";
 
-import {useState, useCallback, useEffect} from "react";
+import {useState, useCallback} from "react";
 import {
   Container,
   Row,
@@ -17,8 +17,7 @@ import {
 } from "@mdi/js"; 
 import Swal from "sweetalert2";
 import { apiFetch } from "@/lib/api";
-import { AUTH_PROVIDER_ID, REFRESH_TOKEN_ERROR } from "@/lib/constants";
-import { useSession, signIn } from "next-auth/react";
+import { useSession } from "next-auth/react";
 
 interface UserInfo {
   id: string;
@@ -42,23 +41,12 @@ function parseCn(dn: string): string | null {
 }
 
 export default function KeysPage() {
-  const {data: session} = useSession({
-    required: true,
-    onUnauthenticated() {
-      signIn(AUTH_PROVIDER_ID);
-    },
-  });
+  const {data: session} = useSession();
 
   const [username, setUsername] = useState("");
   const [user, setUser] = useState<UserInfo | null>(null);
   const [keys, setKeys] = useState<Key[]>([]);
   const [mutating, setMutating] = useState(false);
-
-
-  const sessionError = session?.error;
-  useEffect(() => {
-    if (sessionError === REFRESH_TOKEN_ERROR) signIn(AUTH_PROVIDER_ID);
-  }, [sessionError]);
 
   const token = session?.accessToken ?? "";
 
@@ -133,16 +121,6 @@ export default function KeysPage() {
     if (result.isConfirmed) {
       await removeKey(keyId);
     }
-  }
-
-  const allowed = session?.groups?.includes("rtp");
-  if (!allowed) {
-    return (
-      <Container className="py-5 text-center text-muted">
-        <h4>Access Denied</h4>
-        <p>You must be an RTP to view this page.</p>
-      </Container>
-    );
   }
 
   return (
