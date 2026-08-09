@@ -4,7 +4,9 @@ import { buildAuthErrorUrl } from "@/lib/auth-utils";
 
 export function proxy(req: NextRequest) {
   if (req.nextUrl.searchParams.get("error")) {
-    return NextResponse.redirect(new URL(buildAuthErrorUrl(req.nextUrl.searchParams), req.url));
+    return NextResponse.redirect(
+      new URL(buildAuthErrorUrl(req.nextUrl.searchParams), req.url)
+    );
   }
   return NextResponse.next();
 }

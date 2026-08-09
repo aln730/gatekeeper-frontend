@@ -5,21 +5,27 @@ Web interface for [gatekeeper-mqtt](https://github.com/ComputerScienceHouse/gate
 Built with Next.js 15, next-auth v5 (CSH SSO), react-bootstrap, and [csh-material-bootstrap](https://github.com/ComputerScienceHouse/csh-material-bootstrap).
 
 ## Features
+
 ### Doors
+
 - **Doors dashboard** — live online/offline status for all doors, updated every 30 seconds
 - **Unlock** — send an unlock command to any door with a single click
 - **Access feedback** — door-specific error messages on 403 (e.g. safety seminar, RTP status)
 
 ### Logs
+
 - **Access logs** — log viewer for door access events
 
 ### Keys
+
 - **Keys Management** — Disable/Delete user keys using a simple lookup
 
 ### AccessGate
+
 - Enforce RTPs to state a reason in order to access Keys/Logs page
 
 ### Audit
+
 - **Audit Logs** — log viewer for page access events
 
 ## Prerequisites
@@ -37,12 +43,12 @@ cp .env.local.example .env.local
 
 Edit `.env.local`:
 
-| Variable | Description |
-|----------|-------------|
+| Variable              | Description                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------- |
 | `NEXT_PUBLIC_API_URL` | Base URL of the gatekeeper-mqtt API, no trailing slash (e.g. `http://localhost:3001`) |
-| `AUTH_SECRET` | Session encryption secret — generate with `openssl rand -base64 32` |
-| `AUTH_OIDC_ID` | OIDC client ID from CSH SSO |
-| `AUTH_OIDC_SECRET` | OIDC client secret from CSH SSO |
+| `AUTH_SECRET`         | Session encryption secret — generate with `openssl rand -base64 32`                   |
+| `AUTH_OIDC_ID`        | OIDC client ID from CSH SSO                                                           |
+| `AUTH_OIDC_SECRET`    | OIDC client secret from CSH SSO                                                       |
 
 The OIDC client must have `http://localhost:3000/api/auth/callback/csh` in its allowed redirect URIs (replace `localhost:3000` with your deployment URL in production).
 
@@ -68,4 +74,3 @@ npm test
 npm run build
 npm start
 ```
-

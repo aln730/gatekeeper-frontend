@@ -10,7 +10,9 @@ function AuthErrorContent() {
   const params = useSearchParams();
   const error = params.get("error") ?? "Unknown";
   const description = params.get("error_description");
-  const message = AUTH_ERROR_MESSAGES[error] ?? `An authentication error occurred (${error}).`;
+  const message =
+    AUTH_ERROR_MESSAGES[error] ??
+    `An authentication error occurred (${error}).`;
 
   return (
     <Container className="mt-5" style={{ maxWidth: 480 }}>

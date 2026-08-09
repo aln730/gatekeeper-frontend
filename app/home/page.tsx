@@ -1,6 +1,8 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import Icon from "@mdi/react";
 import { mdiKeyVariant, mdiDatabase } from "@mdi/js";
+import { auth } from "@/lib/auth";
 
 const sections = [
   {
@@ -15,7 +17,12 @@ const sections = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await auth();
+  if (!session?.username) {
+    redirect("/signin");
+  }
+
   return (
     <div className="container-lg py-5">
       <div className="row g-4 justify-content-center">

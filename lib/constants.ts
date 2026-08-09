@@ -14,5 +14,6 @@ export const AUTH_ERROR_MESSAGES: Record<string, string> = {
   Configuration: "There is a problem with the server configuration.",
   AccessDenied: "You do not have permission to sign in.",
   Verification: "The sign-in link is no longer valid.",
-  invalid_scope: "The application requested an invalid OAuth scope. Contact a system administrator.",
+  invalid_scope:
+    "The application requested an invalid OAuth scope. Contact a system administrator.",
 };

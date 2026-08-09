@@ -35,6 +35,13 @@ export default function AccessGate({
     }
   }
 
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.ctrlKey && e.key === "Enter") {
+      e.preventDefault();
+      e.currentTarget.form?.requestSubmit();
+    }
+  }
+
   return (
     <Container className="py-4" style={{ maxWidth: 480 }}>
       <div className="card">
@@ -52,6 +59,7 @@ export default function AccessGate({
                 required
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
+                onKeyDown={handleKeyDown}
                 style={{ resize: "none" }}
               />
             </div>

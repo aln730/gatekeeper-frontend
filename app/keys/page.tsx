@@ -1,20 +1,14 @@
 "use client";
 
-import {useState, useCallback, useEffect} from "react";
-import {
-  Container,
-  Row,
-  Col,
-  Table,
-  Button,
-} from "react-bootstrap";
+import { useState, useCallback, useEffect } from "react";
+import { Container, Row, Col, Table, Button } from "react-bootstrap";
 import Icon from "@mdi/react";
 import {
   mdiMagnify,
   mdiKeyVariant,
   mdiTrashCanOutline,
   mdiAccountKey,
-} from "@mdi/js"; 
+} from "@mdi/js";
 import Swal from "sweetalert2";
 import { apiFetch } from "@/lib/api";
 import { useSession } from "next-auth/react";
@@ -43,7 +37,7 @@ function parseCn(dn: string): string | null {
 }
 
 function KeysPageInner() {
-  const {data: session} = useSession();
+  const { data: session } = useSession();
 
   const [granted, setGranted] = useState(false);
   const [username, setUsername] = useState("");
@@ -70,9 +64,9 @@ function KeysPageInner() {
           token
         )) as Key[];
         setKeys(keysRes);
-        } catch (e) {
-          console.error(e);
-        }
+      } catch (e) {
+        console.error(e);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -86,7 +80,9 @@ function KeysPageInner() {
         method: "PATCH",
         body: JSON.stringify({ enabled, username: user?.username }),
       });
-      setKeys((prev) => prev.map((k) => (k._id === keyId ? { ...k, enabled } : k)));
+      setKeys((prev) =>
+        prev.map((k) => (k._id === keyId ? { ...k, enabled } : k))
+      );
     } catch (e) {
       console.error(e);
     } finally {
@@ -162,29 +158,29 @@ function KeysPageInner() {
       {user && (
         <>
           <div className="card mb-4">
-              <div className="card-header d-flex justify-content-between align-items-center">
-                <span>
-                  <Icon path={mdiAccountKey} size={0.85} className="me-2" />
-                  Groups
-                </span>
+            <div className="card-header d-flex justify-content-between align-items-center">
+              <span>
+                <Icon path={mdiAccountKey} size={0.85} className="me-2" />
+                Groups
+              </span>
+            </div>
+            <div className="card-body">
+              <div className="d-flex flex-wrap gap-1">
+                {user.groups.filter((g) => parseCn(g)).length === 0 ? (
+                  <span className="text-muted small">No groups</span>
+                ) : (
+                  user.groups.map((g) => {
+                    const label = parseCn(g);
+                    if (!label) return null;
+                    return (
+                      <span key={g} className="badge text-bg-light">
+                        {label}
+                      </span>
+                    );
+                  })
+                )}
               </div>
-              <div className="card-body">
-                <div className="d-flex flex-wrap gap-1">
-                  {user.groups.filter((g) => parseCn(g)).length === 0 ? (
-                    <span className="text-muted small">No groups</span>
-                  ) : (
-                    user.groups.map((g) => {
-                      const label = parseCn(g);
-                      if (!label) return null;
-                      return (
-                        <span key={g} className="badge text-bg-light">
-                          {label}
-                        </span>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
+            </div>
           </div>
 
           <div className="card mb-4">
@@ -201,61 +197,80 @@ function KeysPageInner() {
               </div>
             ) : (
               <div className="table-responsive">
-              <Table hover size="sm" className="mb-0" style={{ fontSize: "0.875rem" }}>
-                <thead>
-                  <tr> 
-                    <th style={{ width: "20%" }}>UID</th>
-                    <th style={{ width: "25%" }}>KeyId</th>
-                    <th style={{ width: "20%" }}>Realms</th>
-                    <th style={{ width: "25%" }} className="text-center">Status</th>
-                    <th style={{ width: "25%" }} />
-                  </tr>
-                </thead>
-                <tbody>
-                  {keys.map((k) => (
-                    <tr key={k._id}>
-                      <td>{k.uid ?? <span>Mobile key</span>}</td>
-                      <td>{k._id}</td>
-                      <td>
-                      <div className="d-flex flex-column gap-1">
-                        {Object.keys(k)
-                          .filter((r) => r.endsWith("Id") && !["_id", "userId"].includes(r) && k[r as keyof Key]) //this will be huge for debugging new realms
-                          .map((r) => (
-                            <div key={r} className="d-flex gap-2 align-items-center">
-                            <span className="badge text-bg-primary text-white">{r}: {k[r as keyof Key] as string}</span>
-                            </div>
-                          ))}
-                      </div>
-                      </td>
-                      <td className="text-center">
-                        <span className={`badge rounded-pill ${k.enabled ? "text-bg-success" : "text-bg-danger"}`}>
-                          {k.enabled ? "Enabled" : "Disabled"}
-                        </span>
-                      </td>
-                      <td className="text-end">
-                        <div className="d-flex gap-1 justify-content-end">
-                          <Button
-                            variant={k.enabled ? "danger" : "success"}
-                            size="sm"
-                            onClick={() => toggleKey(k._id, !k.enabled)}
-                            disabled={mutating}
-                          >
-                            {k.enabled ? "Disable" : "Enable"}
-                          </Button>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => confirmAndRemoveKey(k._id)}
-                            disabled={mutating}
-                          >
-                            <Icon path={mdiTrashCanOutline} size={0.65} />
-                          </Button>
-                        </div>
-                      </td>
+                <Table
+                  hover
+                  size="sm"
+                  className="mb-0"
+                  style={{ fontSize: "0.875rem" }}
+                >
+                  <thead>
+                    <tr>
+                      <th style={{ width: "20%" }}>UID</th>
+                      <th style={{ width: "25%" }}>KeyId</th>
+                      <th style={{ width: "20%" }}>Realms</th>
+                      <th style={{ width: "25%" }} className="text-center">
+                        Status
+                      </th>
+                      <th style={{ width: "25%" }} />
                     </tr>
-                  ))}
-                </tbody>
-              </Table>
+                  </thead>
+                  <tbody>
+                    {keys.map((k) => (
+                      <tr key={k._id}>
+                        <td>{k.uid ?? <span>Mobile key</span>}</td>
+                        <td>{k._id}</td>
+                        <td>
+                          <div className="d-flex flex-column gap-1">
+                            {Object.keys(k)
+                              .filter(
+                                (r) =>
+                                  r.endsWith("Id") &&
+                                  !["_id", "userId"].includes(r) &&
+                                  k[r as keyof Key]
+                              ) //this will be huge for debugging new realms
+                              .map((r) => (
+                                <div
+                                  key={r}
+                                  className="d-flex gap-2 align-items-center"
+                                >
+                                  <span className="badge text-bg-primary text-white">
+                                    {r}: {k[r as keyof Key] as string}
+                                  </span>
+                                </div>
+                              ))}
+                          </div>
+                        </td>
+                        <td className="text-center">
+                          <span
+                            className={`badge rounded-pill ${k.enabled ? "text-bg-success" : "text-bg-danger"}`}
+                          >
+                            {k.enabled ? "Enabled" : "Disabled"}
+                          </span>
+                        </td>
+                        <td className="text-end">
+                          <div className="d-flex gap-1 justify-content-end">
+                            <Button
+                              variant={k.enabled ? "danger" : "success"}
+                              size="sm"
+                              onClick={() => toggleKey(k._id, !k.enabled)}
+                              disabled={mutating}
+                            >
+                              {k.enabled ? "Disable" : "Enable"}
+                            </Button>
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              onClick={() => confirmAndRemoveKey(k._id)}
+                              disabled={mutating}
+                            >
+                              <Icon path={mdiTrashCanOutline} size={0.65} />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
               </div>
             )}
           </div>

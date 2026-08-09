@@ -7,7 +7,10 @@ import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import Tooltip from "react-bootstrap/Tooltip";
 import Icon from "@mdi/react";
 import { mdiDoor, mdiLockOpenOutline } from "@mdi/js";
-import { DOOR_ACCESS_DENIED_MESSAGES, DEFAULT_NO_ACCESS } from "@/lib/constants";
+import {
+  DOOR_ACCESS_DENIED_MESSAGES,
+  DEFAULT_NO_ACCESS,
+} from "@/lib/constants";
 
 function formatHeartbeat(lastHeartbeat: number): string {
   if (!lastHeartbeat) return "Never";
@@ -26,6 +29,7 @@ interface DoorCardProps {
   status: DoorStatus | undefined;
   onUnlock: (doorId: string) => void;
   loading?: boolean;
+  offline?: boolean;
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -34,12 +38,12 @@ const STATUS_COLOR: Record<string, string> = {
   unknown: "#9e9e9e",
 };
 
-
 export default function DoorCard({
   door,
   status,
   onUnlock,
   loading = false,
+  offline = false,
 }: DoorCardProps) {
   const guess = status?.guess ?? "unknown";
   const color = STATUS_COLOR[guess] ?? STATUS_COLOR.unknown;
@@ -51,7 +55,11 @@ export default function DoorCard({
           <h5 className="mb-0 d-flex align-items-center gap-2">
             <OverlayTrigger
               placement="top"
-              overlay={<Tooltip>Last seen: {formatHeartbeat(status?.lastHeartbeat ?? 0)}</Tooltip>}
+              overlay={
+                <Tooltip>
+                  Last seen: {formatHeartbeat(status?.lastHeartbeat ?? 0)}
+                </Tooltip>
+              }
             >
               <span
                 style={{
@@ -69,7 +77,10 @@ export default function DoorCard({
             {door.name}
           </h5>
           {!door.access && (
-            <p className="text-muted mb-0 mt-1" style={{ fontSize: "0.875rem" }}>
+            <p
+              className="text-muted mb-0 mt-1"
+              style={{ fontSize: "0.875rem" }}
+            >
               {DOOR_ACCESS_DENIED_MESSAGES[door.name] ?? DEFAULT_NO_ACCESS}
             </p>
           )}
@@ -79,7 +90,7 @@ export default function DoorCard({
             variant="primary"
             className="ms-3 flex-shrink-0"
             onClick={() => onUnlock(door.id)}
-            disabled={loading}
+            disabled={loading || offline}
           >
             {loading ? (
               <>
@@ -87,7 +98,10 @@ export default function DoorCard({
                 Unlocking...
               </>
             ) : (
-              <><Icon path={mdiLockOpenOutline} size={0.75} className="me-1" />Unlock</>
+              <>
+                <Icon path={mdiLockOpenOutline} size={0.75} className="me-1" />
+                Unlock
+              </>
             )}
           </Button>
         )}

@@ -9,8 +9,9 @@ import Col from "react-bootstrap/Col";
 import Spinner from "react-bootstrap/Spinner";
 import { apiFetch } from "@/lib/api";
 import DoorCard, { type Door, type DoorStatus } from "@/components/DoorCard";
+import AuthGate from "@/components/AuthGate";
 
-export default function DoorsPage() {
+function DoorsPageInner() {
   const { data: session } = useSession();
   const token = session?.accessToken ?? "";
 
@@ -19,7 +20,7 @@ export default function DoorsPage() {
   const [loadingDoors, setLoadingDoors] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [unlocking, setUnlocking] = useState<Record<string, boolean>>({});
-  
+
   // Stable ref so fetchStatuses doesn't change identity on token refresh
   const tokenRef = useRef(token);
   tokenRef.current = token;
@@ -44,7 +45,10 @@ export default function DoorsPage() {
         const r = results[i];
         if (r.status === "fulfilled" && r.value) {
           const s = r.value as DoorStatus;
-          if (prev[d.id]?.guess !== s.guess || prev[d.id]?.lastHeartbeat !== s.lastHeartbeat) {
+          if (
+            prev[d.id]?.guess !== s.guess ||
+            prev[d.id]?.lastHeartbeat !== s.lastHeartbeat
+          ) {
             next[d.id] = s;
             changed = true;
           }
@@ -152,6 +156,7 @@ export default function DoorsPage() {
               status={statuses[door.id]}
               onUnlock={handleUnlock}
               loading={unlocking[door.id] ?? false}
+              offline={statuses[door.id]?.guess === "offline"}
             />
           </Col>
         ))}
@@ -167,6 +172,7 @@ export default function DoorsPage() {
                   status={statuses[door.id]}
                   onUnlock={handleUnlock}
                   loading={false}
+                  offline={statuses[door.id]?.guess === "offline"}
                 />
               </Col>
             ))}
@@ -174,5 +180,13 @@ export default function DoorsPage() {
         </>
       )}
     </Container>
+  );
+}
+
+export default function DoorsPage() {
+  return (
+    <AuthGate>
+      <DoorsPageInner />
+    </AuthGate>
   );
 }

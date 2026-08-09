@@ -25,7 +25,8 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       ...token,
       accessToken: refreshed.access_token,
       refreshToken: refreshed.refresh_token ?? token.refreshToken,
-      expiresAt: Math.floor(Date.now() / 1000) + (refreshed.expires_in as number),
+      expiresAt:
+        Math.floor(Date.now() / 1000) + (refreshed.expires_in as number),
       error: undefined,
     };
   } catch {
@@ -52,21 +53,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   callbacks: {
     jwt({ token, account, profile }) {
-          if (account) {
-            const payload = JSON.parse(
-              Buffer.from((account as any).access_token.split(".")[1], "base64").toString()
-            );
-            return {
-              ...token,
-              accessToken: account.access_token,
-              refreshToken: account.refresh_token,
-              idToken: account.id_token,
-              expiresAt: account.expires_at,
-              username: (profile as any)?.preferred_username,
-              groups: payload.groups ?? [],
-              error: undefined,
-            };
-          }
+      if (account) {
+        const payload = JSON.parse(
+          Buffer.from(
+            (account as any).access_token.split(".")[1],
+            "base64"
+          ).toString()
+        );
+        return {
+          ...token,
+          accessToken: account.access_token,
+          refreshToken: account.refresh_token,
+          idToken: account.id_token,
+          expiresAt: account.expires_at,
+          username: (profile as any)?.preferred_username,
+          groups: payload.groups ?? [],
+          error: undefined,
+        };
+      }
 
       if (token.expiresAt && Date.now() < token.expiresAt * 1000) {
         return token;

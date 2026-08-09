@@ -34,7 +34,11 @@ function formatTimestamp(iso: string): string {
   });
 }
 
-async function fetchAuditEntries(token: string, cursor?: string, search?: string): Promise<AuditResponse> {
+async function fetchAuditEntries(
+  token: string,
+  cursor?: string,
+  search?: string
+): Promise<AuditResponse> {
   const params = new URLSearchParams();
   if (cursor) params.set("cursor", cursor);
   if (search) params.set("search", search);
@@ -43,13 +47,13 @@ async function fetchAuditEntries(token: string, cursor?: string, search?: string
 
 function AuditPageInner() {
   const { data: session } = useSession();
-  const [entries,     setEntries]     = useState<AuditEntry[]>([]);
-  const [loading,      setLoading]     = useState(true);
-  const [search,       setSearch]      = useState("");
-  const [searchInput,  setSearchInput] = useState("");
-  const [cursorStack,  setCursorStack] = useState<Array<string | null>>([null]);
-  const [nextCursor,   setNextCursor]  = useState<string | null>(null);
-  const [pageIndex,    setPageIndex]   = useState(0);
+  const [entries, setEntries] = useState<AuditEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [cursorStack, setCursorStack] = useState<Array<string | null>>([null]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [pageIndex, setPageIndex] = useState(0);
   const token = session?.accessToken ?? "";
   const sessionError = session?.error;
 
@@ -62,27 +66,34 @@ function AuditPageInner() {
     return () => clearTimeout(t);
   }, [searchInput]);
 
-  const loadPage = useCallback(async (idx: number, cursor: string | null) => {
-    if (!token) return;
-    setLoading(true);
-    try {
-      const data = await fetchAuditEntries(token, cursor ?? undefined, search);
-      setEntries(data.entries);
-      setNextCursor(data.cursor);
-      setPageIndex(idx);
-      setCursorStack((prev) => {
-        if (idx + 1 < prev.length) return prev;
-        if (!data.cursor) return prev;
-        const next = [...prev];
-        next[idx + 1] = data.cursor;
-        return next;
-      });
-    } catch (err) {
-      console.error("Failed to load audit entries");
-    } finally {
-      setLoading(false);
-    }
-  }, [token, search]);
+  const loadPage = useCallback(
+    async (idx: number, cursor: string | null) => {
+      if (!token) return;
+      setLoading(true);
+      try {
+        const data = await fetchAuditEntries(
+          token,
+          cursor ?? undefined,
+          search
+        );
+        setEntries(data.entries);
+        setNextCursor(data.cursor);
+        setPageIndex(idx);
+        setCursorStack((prev) => {
+          if (idx + 1 < prev.length) return prev;
+          if (!data.cursor) return prev;
+          const next = [...prev];
+          next[idx + 1] = data.cursor;
+          return next;
+        });
+      } catch (err) {
+        console.error("Failed to load audit entries");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [token, search]
+  );
 
   useEffect(() => {
     setCursorStack([null]);
@@ -94,7 +105,8 @@ function AuditPageInner() {
   const hasPrev = pageIndex > 0;
   const hasNext = nextCursor !== null;
 
-  const goPrev = () => hasPrev && loadPage(pageIndex - 1, cursorStack[pageIndex - 1]);
+  const goPrev = () =>
+    hasPrev && loadPage(pageIndex - 1, cursorStack[pageIndex - 1]);
   const goNext = () => {
     if (!hasNext) return;
     const nextIdx = pageIndex + 1;
@@ -104,10 +116,28 @@ function AuditPageInner() {
   const PaginationControls = () => (
     <ul className="pagination pagination-sm justify-content-center mb-0">
       <li className={`page-item ${!hasPrev ? "disabled" : ""}`}>
-        <a className="page-link" href="#" onClick={(e) => { e.preventDefault(); goPrev(); }}>Prev</a>
+        <a
+          className="page-link"
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            goPrev();
+          }}
+        >
+          Prev
+        </a>
       </li>
       <li className={`page-item ${!hasNext ? "disabled" : ""}`}>
-        <a className="page-link" href="#" onClick={(e) => { e.preventDefault(); goNext(); }}>Next</a>
+        <a
+          className="page-link"
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            goNext();
+          }}
+        >
+          Next
+        </a>
       </li>
     </ul>
   );
@@ -117,7 +147,9 @@ function AuditPageInner() {
       <div className="row mb-3 align-items-center">
         <div className="col-12 col-md-4 mb-2 mb-md-0">
           <div className="input-group">
-            <span className="input-group-text"><Icon path={mdiMagnify} size={0.75} /></span>
+            <span className="input-group-text">
+              <Icon path={mdiMagnify} size={0.75} />
+            </span>
             <input
               type="text"
               className="form-control"
@@ -131,7 +163,10 @@ function AuditPageInner() {
 
       <div className="card">
         <div className="card-header d-flex justify-content-between align-items-center">
-          <span><Icon path={mdiHistory} size={0.85} className="me-2" />Audit Logs</span>
+          <span>
+            <Icon path={mdiHistory} size={0.85} className="me-2" />
+            Audit Logs
+          </span>
         </div>
         <div className="card-body py-2 border-bottom">
           <PaginationControls />
@@ -143,17 +178,32 @@ function AuditPageInner() {
           </div>
         ) : entries.length === 0 ? (
           <div className="card-body text-center py-5 text-muted">
-            <Icon path={mdiHistory} size={2} className="mb-3 opacity-25 d-block mx-auto" />
+            <Icon
+              path={mdiHistory}
+              size={2}
+              className="mb-3 opacity-25 d-block mx-auto"
+            />
             <p className="mb-0">No entries match your filters.</p>
             {search && (
-              <button className="btn btn-link btn-sm mt-2" onClick={() => { setSearchInput(""); setSearch(""); }}>
+              <button
+                className="btn btn-link btn-sm mt-2"
+                onClick={() => {
+                  setSearchInput("");
+                  setSearch("");
+                }}
+              >
                 Clear filters
               </button>
             )}
           </div>
         ) : (
           <div className="table-responsive">
-            <Table hover size="sm" className="mb-0" style={{ fontSize: "0.875rem" }}>
+            <Table
+              hover
+              size="sm"
+              className="mb-0"
+              style={{ fontSize: "0.875rem" }}
+            >
               <thead>
                 <tr>
                   <th style={{ width: "16%" }}>Timestamp</th>
@@ -166,10 +216,14 @@ function AuditPageInner() {
               <tbody>
                 {entries.map((entry) => (
                   <tr key={entry._id}>
-                    <td style={{ whiteSpace: "nowrap" }}>{formatTimestamp(entry.timestamp)}</td>
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      {formatTimestamp(entry.timestamp)}
+                    </td>
                     <td>{entry.username}</td>
                     <td>{entry.name}</td>
-                    <td><span>{entry.action}</span></td>
+                    <td>
+                      <span>{entry.action}</span>
+                    </td>
                     <td>{entry.reason}</td>
                   </tr>
                 ))}
@@ -182,9 +236,7 @@ function AuditPageInner() {
           className="card-footer d-grid align-items-center"
           style={{ gridTemplateColumns: "1fr auto 1fr" }}
         >
-          <small className="text-muted">
-            Page {pageIndex + 1} &nbsp;
-          </small>
+          <small className="text-muted">Page {pageIndex + 1} &nbsp;</small>
           <div className="justify-self-center">
             <PaginationControls />
           </div>

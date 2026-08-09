@@ -3,7 +3,13 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Container, Row, Col, Table, Spinner, Button } from "react-bootstrap";
 import Icon from "@mdi/react";
-import { mdiMagnify, mdiHistory, mdiCheckCircle, mdiCloseCircle, mdiEyeOutline } from "@mdi/js";
+import {
+  mdiMagnify,
+  mdiHistory,
+  mdiCheckCircle,
+  mdiCloseCircle,
+  mdiEyeOutline,
+} from "@mdi/js";
 import { apiFetch } from "@/lib/api";
 
 import { AUTH_PROVIDER_ID, REFRESH_TOKEN_ERROR } from "@/lib/constants";
@@ -24,6 +30,7 @@ interface LogEntry {
   keyId: string;
   uid?: string | null;
   granted: boolean;
+  accessType: "oidc" | "mobile" | "physical";
 }
 
 interface LogsResponse {
@@ -73,6 +80,29 @@ function formatTimestamp(iso: string): string {
   });
 }
 
+function fetchAccessType(entry: LogEntry) {
+  switch (entry.accessType) {
+    case "oidc":
+      return "Remote Access";
+    case "mobile":
+      return (
+        <div>
+          <div>Mobile Key</div>
+          <div style={{ fontSize: "0.70rem" }}>({entry.keyId})</div>
+        </div>
+      );
+    case "physical":
+      return (
+        <div>
+          <div>Physical Key</div>
+          <div style={{ fontSize: "0.70rem" }}>({entry.keyId})</div>
+        </div>
+      );
+    default:
+      return <span>-</span>;
+  }
+}
+
 async function fetchLogs(
   token: string,
   cursor?: string,
@@ -99,19 +129,21 @@ async function fetchDoors(token: string): Promise<string[]> {
 function LogsPageInner() {
   const { data: session } = useSession();
   const [granted, setGranted] = useState(false);
-  const [logs,        setLogs]        = useState<LogEntry[]>([]);
-  const [doors,       setDoors]       = useState<string[]>([]);
-  const [loading,     setLoading]     = useState(true);
-  const [refreshing,  setRefreshing]  = useState(false);
-  const [search,      setSearch]      = useState("");
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [doors, setDoors] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [grantFilter, setGrantFilter] = useState<"all" | "granted" | "denied">("all");
-  const [doorFilter,  setDoorFilter]  = useState("all");
-  const [sinceDate,   setSinceDate]   = useState(defaultSinceDate());
-  const [untilDate,   setUntilDate]   = useState(defaultUntilDate());
+  const [grantFilter, setGrantFilter] = useState<"all" | "granted" | "denied">(
+    "all"
+  );
+  const [doorFilter, setDoorFilter] = useState("all");
+  const [sinceDate, setSinceDate] = useState(defaultSinceDate());
+  const [untilDate, setUntilDate] = useState(defaultUntilDate());
   const [cursorStack, setCursorStack] = useState<Array<string | null>>([null]);
-  const [nextCursor,  setNextCursor]  = useState<string | null>(null);
-  const [pageIndex,   setPageIndex]   = useState(0);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [pageIndex, setPageIndex] = useState(0);
   const token = session?.accessToken ?? "";
   const sessionError = session?.error;
   const rangeElRef = useRef<HTMLDivElement>(null);
@@ -130,31 +162,33 @@ function LogsPageInner() {
 
     let cancelled = false;
 
-  function handleChange() {
-    const rangepicker = rangepickerRef.current;
-    if (!rangepicker) return;
-    const dates = rangepicker.getDates(DATE_FORMAT);
-    const start = dates[0] as string | undefined;
-    const end = dates[1] as string | undefined;
-    if (start) setSinceDate(start);
-    if (end) setUntilDate(end);
-  }
+    function handleChange() {
+      const rangepicker = rangepickerRef.current;
+      if (!rangepicker) return;
+      const dates = rangepicker.getDates(DATE_FORMAT);
+      const start = dates[0] as string | undefined;
+      const end = dates[1] as string | undefined;
+      if (start) setSinceDate(start);
+      if (end) setUntilDate(end);
+    }
 
-    import("vanillajs-datepicker/DateRangePicker").then(({ default: DateRangePickerCtor }) => {
-      if (cancelled || !rangeElRef.current) return;
+    import("vanillajs-datepicker/DateRangePicker").then(
+      ({ default: DateRangePickerCtor }) => {
+        if (cancelled || !rangeElRef.current) return;
 
-      const rangepicker = new DateRangePickerCtor(rangeElRef.current, {
-        format: DATE_FORMAT,
-        buttonClass: "btn",
-        autohide: true,
-      });
-      rangepickerRef.current = rangepicker;
-      rangeElRef.current.addEventListener("changeDate", handleChange);
+        const rangepicker = new DateRangePickerCtor(rangeElRef.current, {
+          format: DATE_FORMAT,
+          buttonClass: "btn",
+          autohide: true,
+        });
+        rangepickerRef.current = rangepicker;
+        rangeElRef.current.addEventListener("changeDate", handleChange);
 
-      if (startInputRef.current) startInputRef.current.value = sinceDate;
-      if (endInputRef.current) endInputRef.current.value = untilDate;
-      rangepicker.setDates(sinceDate, untilDate);
-    });
+        if (startInputRef.current) startInputRef.current.value = sinceDate;
+        if (endInputRef.current) endInputRef.current.value = untilDate;
+        rangepicker.setDates(sinceDate, untilDate);
+      }
+    );
 
     return () => {
       cancelled = true;
@@ -162,7 +196,6 @@ function LogsPageInner() {
       rangepickerRef.current?.destroy();
       rangepickerRef.current = null;
     };
-
   }, [granted]);
 
   useEffect(() => {
@@ -171,33 +204,46 @@ function LogsPageInner() {
 
   useEffect(() => {
     if (!granted || !token) return;
-    fetchDoors(token).then(setDoors).catch((e) => console.error(e));
+    fetchDoors(token)
+      .then(setDoors)
+      .catch((e) => console.error(e));
   }, [granted, token]);
 
-  const loadPage = useCallback(async (idx: number, cursor: string | null, silent = false) => {
-    if (!token) return;
-    silent ? setRefreshing(true) : setLoading(true);
-    try {
-      const since = toIso(sinceDate, false);
-      const until = toIso(untilDate, true);
-      const data = await fetchLogs(token, cursor ?? undefined, since, until, search, doorFilter, grantFilter);
-      setLogs(data.logs);
-      setNextCursor(data.cursor);
-      setPageIndex(idx);
-      setCursorStack((prev) => {
-        if (idx + 1 < prev.length) return prev;
-        if (!data.cursor) return prev;
-        const next = [...prev];
-        next[idx + 1] = data.cursor;
-        return next;
-      });
-    } catch (err) {
-      console.error("Failed to load logs");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [token, sinceDate, untilDate, search, doorFilter, grantFilter]);
+  const loadPage = useCallback(
+    async (idx: number, cursor: string | null, silent = false) => {
+      if (!token) return;
+      silent ? setRefreshing(true) : setLoading(true);
+      try {
+        const since = toIso(sinceDate, false);
+        const until = toIso(untilDate, true);
+        const data = await fetchLogs(
+          token,
+          cursor ?? undefined,
+          since,
+          until,
+          search,
+          doorFilter,
+          grantFilter
+        );
+        setLogs(data.logs);
+        setNextCursor(data.cursor);
+        setPageIndex(idx);
+        setCursorStack((prev) => {
+          if (idx + 1 < prev.length) return prev;
+          if (!data.cursor) return prev;
+          const next = [...prev];
+          next[idx + 1] = data.cursor;
+          return next;
+        });
+      } catch (err) {
+        console.error("Failed to load logs");
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [token, sinceDate, untilDate, search, doorFilter, grantFilter]
+  );
 
   // reset to page 0 and refetch whenever any filter changes
   useEffect(() => {
@@ -211,7 +257,8 @@ function LogsPageInner() {
   const hasPrev = pageIndex > 0;
   const hasNext = nextCursor !== null;
 
-  const goPrev = () => hasPrev && loadPage(pageIndex - 1, cursorStack[pageIndex - 1]);
+  const goPrev = () =>
+    hasPrev && loadPage(pageIndex - 1, cursorStack[pageIndex - 1]);
   const goNext = () => {
     if (!hasNext) return;
     const nextIdx = pageIndex + 1;
@@ -221,10 +268,28 @@ function LogsPageInner() {
   const PaginationControls = () => (
     <ul className="pagination pagination-sm justify-content-center mb-0">
       <li className={`page-item ${!hasPrev ? "disabled" : ""}`}>
-        <a className="page-link" href="#" onClick={(e) => { e.preventDefault(); goPrev(); }}>Prev</a>
+        <a
+          className="page-link"
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            goPrev();
+          }}
+        >
+          Prev
+        </a>
       </li>
       <li className={`page-item ${!hasNext ? "disabled" : ""}`}>
-        <a className="page-link" href="#" onClick={(e) => { e.preventDefault(); goNext(); }}>Next</a>
+        <a
+          className="page-link"
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            goNext();
+          }}
+        >
+          Next
+        </a>
       </li>
     </ul>
   );
@@ -241,7 +306,6 @@ function LogsPageInner() {
 
   return (
     <Container fluid className="py-4">
-
       <Row className="mb-4 align-items-center">
         <Col xs="auto">
           <Button
@@ -250,7 +314,11 @@ function LogsPageInner() {
             onClick={() => loadPage(pageIndex, cursorStack[pageIndex], true)}
             disabled={refreshing}
           >
-            {refreshing ? <Spinner animation="border" size="sm" /> : <Icon path={mdiEyeOutline} size={1.5} />}
+            {refreshing ? (
+              <Spinner animation="border" size="sm" />
+            ) : (
+              <Icon path={mdiEyeOutline} size={1.5} />
+            )}
           </Button>
         </Col>
       </Row>
@@ -258,7 +326,9 @@ function LogsPageInner() {
       <div className="row mb-3 align-items-center">
         <div className="col-12 col-md-4 mb-2 mb-md-0">
           <div className="input-group">
-            <span className="input-group-text"><Icon path={mdiMagnify} size={0.75} /></span>
+            <span className="input-group-text">
+              <Icon path={mdiMagnify} size={0.75} />
+            </span>
             <input
               type="text"
               className="form-control"
@@ -269,16 +339,30 @@ function LogsPageInner() {
           </div>
         </div>
         <div className="col-6 col-md-2 mb-2 mb-md-0">
-          <select className="form-select" value={grantFilter} onChange={(e) => setGrantFilter(e.target.value as typeof grantFilter)}>
+          <select
+            className="form-select"
+            value={grantFilter}
+            onChange={(e) =>
+              setGrantFilter(e.target.value as typeof grantFilter)
+            }
+          >
             <option value="all">All results</option>
             <option value="granted">Granted only</option>
             <option value="denied">Denied only</option>
           </select>
         </div>
         <div className="col-6 col-md-2 mb-2 mb-md-0">
-          <select className="form-select" value={doorFilter} onChange={(e) => setDoorFilter(e.target.value)}>
+          <select
+            className="form-select"
+            value={doorFilter}
+            onChange={(e) => setDoorFilter(e.target.value)}
+          >
             <option value="all">All doors</option>
-            {doors.map((d) => <option key={d} value={d}>{d}</option>)}
+            {doors.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -304,7 +388,10 @@ function LogsPageInner() {
 
       <div className="card">
         <div className="card-header d-flex justify-content-between align-items-center">
-          <span><Icon path={mdiHistory} size={0.85} className="me-2" />Logs</span>
+          <span>
+            <Icon path={mdiHistory} size={0.85} className="me-2" />
+            Logs
+          </span>
         </div>
         <div className="card-body py-2 border-bottom">
           <PaginationControls />
@@ -317,7 +404,11 @@ function LogsPageInner() {
           </div>
         ) : logs.length === 0 ? (
           <div className="card-body text-center py-5 text-muted">
-            <Icon path={mdiHistory} size={2} className="mb-3 opacity-25 d-block mx-auto" />
+            <Icon
+              path={mdiHistory}
+              size={2}
+              className="mb-3 opacity-25 d-block mx-auto"
+            />
             <p className="mb-0">No log entries match your filters.</p>
             {(search || grantFilter !== "all" || doorFilter !== "all") && (
               <button
@@ -335,40 +426,41 @@ function LogsPageInner() {
           </div>
         ) : (
           <div className="table-responsive">
-            <Table hover size="sm" className="mb-0" style={{ fontSize: "0.875rem" }}>
+            <Table
+              hover
+              size="sm"
+              className="mb-0"
+              style={{ fontSize: "0.875rem" }}
+            >
               <thead>
                 <tr>
                   <th style={{ width: "16%" }}>Timestamp</th>
                   <th style={{ width: "22%" }}>Door</th>
                   <th style={{ width: "22%" }}>Username</th>
                   <th style={{ width: "18%" }}>Name</th>
-                  <th style={{ width: "15%" }}>Keys</th>
-                  <th style={{ width: "10%" }}>Access</th>
+                  <th style={{ width: "16%" }}>Access method</th>
+                  <th style={{ width: "12%" }}>Access</th>
                 </tr>
               </thead>
               <tbody>
                 {logs.map((entry) => (
                   <tr key={entry._id}>
-                    <td style={{ whiteSpace: "nowrap" }}>{formatTimestamp(entry.timestamp)}</td>
-                    <td>
-                      {entry.doorName ?? <span className="font-monospace text-muted">{entry.door}</span>}
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      {formatTimestamp(entry.timestamp)}
                     </td>
+                    <td>{entry.doorName ?? <span>{entry.door}</span>}</td>
+                    <td>{entry.username ?? <span>unknown</span>}</td>
+                    <td>{entry.name ?? <span>-</span>}</td>
+                    <td>{fetchAccessType(entry)}</td>
                     <td>
-                      {entry.username ?? <span className="text-muted">unknown</span>}
-                    </td>
-                    <td>{entry.name ?? <span className="text-muted">-</span>}</td>
-                    <td>
-                      {entry.uid === undefined ? (
-                        <span>-</span>
-                      ) : entry.uid === null ? (
-                        "Mobile Key"
-                      ) : (
-                        <span className="font-monospace small">{entry.uid}</span>
-                      )}
-                    </td>
-                    <td>
-                      <span className={`badge rounded-pill ${entry.granted ? "text-bg-success" : "text-bg-danger"}`}>
-                        <Icon path={entry.granted ? mdiCheckCircle : mdiCloseCircle} size={0.55} className="me-1" />
+                      <span
+                        className={`badge rounded-pill ${entry.granted ? "text-bg-success" : "text-bg-danger"}`}
+                      >
+                        <Icon
+                          path={entry.granted ? mdiCheckCircle : mdiCloseCircle}
+                          size={0.55}
+                          className="me-1"
+                        />
                         {entry.granted ? "Granted" : "Denied"}
                       </span>
                     </td>
@@ -383,9 +475,7 @@ function LogsPageInner() {
           className="card-footer d-grid align-items-center"
           style={{ gridTemplateColumns: "1fr auto 1fr" }}
         >
-          <small className="text-muted">
-            Page {pageIndex + 1} &nbsp;
-          </small>
+          <small className="text-muted">Page {pageIndex + 1} &nbsp;</small>
           <div className="justify-self-center">
             <PaginationControls />
           </div>
