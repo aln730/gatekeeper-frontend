@@ -488,7 +488,7 @@ function LogsPageInner() {
 
 export default function LogsPage() {
   return (
-    <AuthGate>
+    <AuthGate allowedGroups={["rtp", "eboard"]}>
       <LogsPageInner />
     </AuthGate>
   );

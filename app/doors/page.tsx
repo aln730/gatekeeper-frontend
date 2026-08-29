@@ -185,7 +185,7 @@ function DoorsPageInner() {
 
 export default function DoorsPage() {
   return (
-    <AuthGate>
+    <AuthGate allowedGroups={["rtp", "eboard"]}>
       <DoorsPageInner />
     </AuthGate>
   );

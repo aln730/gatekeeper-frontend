@@ -5,7 +5,13 @@ import { useSession, signIn } from "next-auth/react";
 import { AUTH_PROVIDER_ID, REFRESH_TOKEN_ERROR } from "@/lib/constants";
 import { useEffect, type ReactNode } from "react";
 
-export default function AuthGate({ children }: { children: ReactNode }) {
+export default function AuthGate({
+  children,
+  allowedGroups = ["rtp"],
+}: {
+  children: ReactNode;
+  allowedGroups?: string[];
+}) {
   const { data: session, status } = useSession({
     required: true,
     onUnauthenticated() {
@@ -26,11 +32,11 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!session?.groups?.includes("rtp")) {
+  if (!session?.groups?.some((group) => allowedGroups.includes(group))) {
     return (
       <Container className="py-5 text-center text-muted">
         <h4>Access Denied</h4>
-        <p>You must be an RTP to view this page.</p>
+        <p>You do not have permission to view this page.</p>
       </Container>
     );
   }

@@ -249,7 +249,7 @@ function AuditPageInner() {
 
 export default function AuditPage() {
   return (
-    <AuthGate>
+    <AuthGate allowedGroups={["rtp", "eboard"]}>
       <AuditPageInner />
     </AuthGate>
   );
